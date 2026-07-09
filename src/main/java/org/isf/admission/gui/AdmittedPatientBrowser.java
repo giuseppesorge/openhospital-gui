@@ -722,6 +722,9 @@ public class AdmittedPatientBrowser extends ModalJFrame implements PatientInsert
 		if (canExportPatientData()) {
 			buttonPanel.add(getButtonExportData());
 		}
+		if (canViewFullRecord()) {
+			buttonPanel.add(getButtonFullRecord());
+		}
 		if (MainMenu.checkUserGrants("btnadmtherapy")) {
 			buttonPanel.add(getButtonTherapy());
 		}
@@ -1026,6 +1029,20 @@ public class AdmittedPatientBrowser extends ModalJFrame implements PatientInsert
 		}
 	}
 
+	private boolean canViewFullRecord() {
+		String currentUser = UserBrowsingManager.getCurrentUser();
+		if (currentUser == null) {
+			return false;
+		}
+		try {
+			return permissionManager.retrievePermissionsByUsername(currentUser).stream()
+							.anyMatch(permission -> "patient.full_record".equals(permission.getName()));
+		} catch (OHServiceException e) {
+			OHServiceExceptionUtil.showMessages(e);
+			return false;
+		}
+	}
+
 	private JButton getButtonExportData() {
 		JButton buttonExportData = new JButton(MessageBundle.getMessage("angal.admission.exportpatientdata.btn"));
 		buttonExportData.setMnemonic(MessageBundle.getMnemonic("angal.admission.exportpatientdata.btn.key"));
@@ -1062,6 +1079,35 @@ public class AdmittedPatientBrowser extends ModalJFrame implements PatientInsert
 			}
 		});
 		return buttonExportData;
+	}
+
+	private JButton getButtonFullRecord() {
+		JButton buttonFullRecord = new JButton(MessageBundle.getMessage("angal.admission.viewfullrecord.btn"));
+		buttonFullRecord.setMnemonic(MessageBundle.getMnemonic("angal.admission.viewfullrecord.btn.key"));
+		buttonFullRecord.addActionListener(actionEvent -> {
+			if (table.getSelectedRow() < 0) {
+				MessageDialog.error(this, "angal.common.pleaseselectapatient.msg");
+				return;
+			}
+			patient = reloadSelectedPatient(table.getSelectedRow());
+
+			if (patient != null) {
+				int code = patient.getPatient().getCode();
+				try {
+					PatientExport export = patientExportManager.exportPatientData(code);
+					if (export == null) {
+						MessageDialog.error(this, "angal.common.pleaseselectapatient.msg");
+						return;
+					}
+					new PatientFullRecordDialog(this, export).setVisible(true);
+				} catch (OHServiceException e) {
+					OHServiceExceptionUtil.showMessages(e);
+				} catch (IOException e) {
+					MessageDialog.error(this, "angal.admission.thepatientdatacouldnotbedisplayed.msg");
+				}
+			}
+		});
+		return buttonFullRecord;
 	}
 
 	private JButton getButtonTherapy() {
