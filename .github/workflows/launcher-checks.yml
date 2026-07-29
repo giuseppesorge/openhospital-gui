@@ -1,0 +1,59 @@
+name: launcher checks
+
+# Scratch branch only, not for merge.
+#
+# Open Hospital ships on three platforms and the launcher defects we have been fixing were
+# each specific to one of them. Checking on the machine we happen to develop on is how those
+# defects survived. Every job below runs the lines taken out of the launcher itself, against
+# the artefact actually released for that platform.
+on:
+  push:
+    branches: [launcher-checks-1151]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the released Linux portable package
+        run: |
+          url=https://github.com/informatici/openhospital/releases/download/v1.15.0/OpenHospital-v1.15.0-linux_x86_64-portable.tar.gz
+          curl -sSL -o pkg.tar.gz "$url"
+          mkdir -p pkg && tar -xzf pkg.tar.gz -C pkg
+          find pkg -type f -name mysqld | head -3
+      - name: oh.sh
+        run: bash ./.github/checks/linux-launcher-check.sh
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the released multiarch client package
+        run: |
+          url=https://github.com/informatici/openhospital/releases/download/v1.15.0/OpenHospital-v1.15.0-multiarch-client.zip
+          curl -sSL -o pkg.zip "$url"
+          mkdir -p pkg && unzip -q pkg.zip -d pkg
+          find pkg -name '*.properties.dist' | head -5
+      - name: ohmac.sh
+        run: bash ./.github/checks/macos-launcher-check.sh
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the released Windows portable package
+        shell: powershell
+        run: |
+          $url = "https://github.com/informatici/openhospital/releases/download/v1.15.0/OpenHospital-v1.15.0-windows_x86_64-portable.zip"
+          curl.exe -sSL -o pkg.zip $url
+          New-Item -ItemType Directory -Force -Path pkg | Out-Null
+          tar.exe -xf pkg.zip -C pkg
+          Get-ChildItem -Path pkg -Recurse -Filter mysqld.exe | ForEach-Object { Write-Host "found: $($_.FullName)" }
+      - name: oh.ps1 under Windows PowerShell 5.1
+        shell: powershell
+        run: .\.github\win-launcher-check.ps1
+      - name: oh.ps1 under PowerShell 7
+        if: always()
+        shell: pwsh
+        run: .\.github\win-launcher-check.ps1
