@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Fetch the released Linux portable package
         run: |
-          url=https://github.com/informatici/openhospital/releases/download/v1.15.0/OpenHospital-v1.15.0-linux_x86_64-portable.tar.gz
+          url=https://github.com/informatici/openhospital/releases/download/v1.15.1/OpenHospital-v1.15.1-linux_x86_64-portable.tar.gz
           curl -sSL -o pkg.tar.gz "$url"
           mkdir -p pkg && tar -xzf pkg.tar.gz -C pkg
           find pkg -type f -name mysqld | head -3
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Fetch the released multiarch client package
         run: |
-          url=https://github.com/informatici/openhospital/releases/download/v1.15.0/OpenHospital-v1.15.0-multiarch-client.zip
+          url=https://github.com/informatici/openhospital/releases/download/v1.15.1/OpenHospital-v1.15.1-multiarch-client.zip
           curl -sSL -o pkg.zip "$url"
           mkdir -p pkg && unzip -q pkg.zip -d pkg
           find pkg -name '*.properties.dist' | head -5
@@ -45,7 +45,7 @@ jobs:
       - name: Fetch the released Windows portable package
         shell: powershell
         run: |
-          $url = "https://github.com/informatici/openhospital/releases/download/v1.15.0/OpenHospital-v1.15.0-windows_x86_64-portable.zip"
+          $url = "https://github.com/informatici/openhospital/releases/download/v1.15.1/OpenHospital-v1.15.1-windows_x86_64-portable.zip"
           curl.exe -sSL -o pkg.zip $url
           New-Item -ItemType Directory -Force -Path pkg | Out-Null
           tar.exe -xf pkg.zip -C pkg
