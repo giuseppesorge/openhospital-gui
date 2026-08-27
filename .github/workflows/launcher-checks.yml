@@ -66,7 +66,7 @@ jobs:
       - name: Fetch the launchers from the branches under review
         shell: bash
         run: |
-          for b in OP-1459-import-fails-loudly OP-1460-macos-working-directory; do
+          for b in OP-1459-import-fails-loudly-1151 OP-1460-macos-working-directory-1151; do
             mkdir -p "$b"
             for f in oh.ps1 oh.sh ohmac.sh oh.bat; do
               curl -sSLf -o "$b/$f" "https://raw.githubusercontent.com/giuseppesorge/openhospital-gui/$b/$f"
