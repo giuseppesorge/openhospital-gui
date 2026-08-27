@@ -57,3 +57,40 @@ jobs:
         if: always()
         shell: pwsh
         run: .\.github\win-launcher-check.ps1
+
+  syntax:
+    # Parses the launchers of the open pull requests on the platform that runs them, so a change to
+    # oh.ps1 is not merged on the word of a shell that never sees it.
+    runs-on: windows-latest
+    steps:
+      - name: Fetch the launchers from the branches under review
+        shell: bash
+        run: |
+          for b in OP-1459-import-fails-loudly OP-1460-macos-working-directory; do
+            mkdir -p "$b"
+            for f in oh.ps1 oh.sh ohmac.sh oh.bat; do
+              curl -sSLf -o "$b/$f" "https://raw.githubusercontent.com/giuseppesorge/openhospital-gui/$b/$f"
+            done
+          done
+      - name: PowerShell parses oh.ps1
+        shell: pwsh
+        run: |
+          $fail = 0
+          Get-ChildItem -Recurse -Filter oh.ps1 | ForEach-Object {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              Write-Host "FAIL $($_.FullName)"; $errors | ForEach-Object { Write-Host "   $_" }; $fail = 1
+            } else {
+              Write-Host "OK   $($_.FullName)"
+            }
+          }
+          exit $fail
+      - name: bash parses oh.sh and ohmac.sh
+        shell: bash
+        run: |
+          fail=0
+          for f in */oh.sh */ohmac.sh; do
+            if bash -n "$f"; then echo "OK   $f"; else echo "FAIL $f"; fail=1; fi
+          done
+          exit $fail
